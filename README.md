@@ -6,7 +6,7 @@ Loja online do bazar **Achadinhos da Bruna** — novos, seminovos e usados em Ru
 - **Loja**: catálogo por categoria, busca, filtros (condição/preço), sacola, checkout
 - **Entrega** em Rurópolis (taxa fixa) ou **retirada no local** (grátis)
 - **Pagamento** via Mercado Pago Checkout Pro (Pix, cartão, boleto) com webhook
-- **Painel** (`/painel/`, só para administradores): faturamento, valor para a ONG,
+- **Painel** (`/admin/painel/`, só para administradores, link no topo do admin): faturamento, valor para a ONG,
   mais/menos buscados, buscas sem resultado, mais/menos vendidos, mais visitados × conversão,
   receita por categoria, estoque baixo e últimos pedidos
 - **Admin** (`/admin/`): cadastrar produtos com foto, gerenciar pedidos e status
@@ -25,7 +25,7 @@ python manage.py runserver
 ```
 
 Abra http://127.0.0.1:8000 (loja), http://127.0.0.1:8000/admin (cadastro) e
-http://127.0.0.1:8000/painel (dashboard).
+http://127.0.0.1:8000/admin/painel (dashboard).
 
 Para apagar os dados de exemplo: `python manage.py popular_demo --limpar` apaga tudo e recria;
 ou apague pelo admin.

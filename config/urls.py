@@ -4,8 +4,9 @@ from django.contrib import admin
 from django.urls import include, path
 
 urlpatterns = [
+    # Antes de admin.site.urls, senão o catch-all do admin responde 404.
+    path("admin/painel/", include("painel.urls")),
     path("admin/", admin.site.urls),
-    path("painel/", include("painel.urls")),
     path("", include("loja.urls")),
 ]
 

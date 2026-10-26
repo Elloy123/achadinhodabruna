@@ -1,0 +1,17 @@
+{% extends "admin/base.html" %}
+
+{% block title %}{% if subtitle %}{{ subtitle }} | {% endif %}{{ title }} | Achadinhos da Bruna{% endblock %}
+
+{% block branding %}
+<div id="site-name"><a href="{% url 'admin:index' %}">Achadinhos da Bruna — Admin</a></div>
+{% if user.is_anonymous %}
+  {% include "admin/color_theme_toggle.html" %}
+{% endif %}
+{% endblock %}
+
+{% block userlinks %}
+  {% if user.is_active and user.is_staff %}<a href="{% url 'painel:dashboard' %}">📊 Painel da loja</a> / {% endif %}
+  {{ block.super }}
+{% endblock %}
+
+{% block nav-global %}{% endblock %}

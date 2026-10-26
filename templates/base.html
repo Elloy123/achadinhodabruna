@@ -26,7 +26,6 @@
         <button type="submit">Buscar</button>
       </form>
       <div class="acoes-topo">
-        {% if user.is_staff %}<a class="btn-sacola" href="{% url 'painel:dashboard' %}">📊 Painel</a>{% endif %}
         <a class="btn-sacola" href="{% url 'loja:carrinho' %}">🛍️ Sacola <span class="contador">{{ qtd_carrinho }}</span></a>
       </div>
     </div>
