@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% load static %}
+{% block titulo %}{{ produto.nome }}{% endblock %}
+{% block conteudo %}
+<article class="produto-det">
+  <div class="produto-foto">
+    {% if produto.imagem %}<img src="{{ produto.imagem.url }}" alt="{{ produto.nome }}">{% else %}<img style="width:40%;opacity:.5" src="{% static 'img/logo.svg' %}" alt="">{% endif %}
+  </div>
+  <div class="produto-info">
+    <a href="{{ produto.categoria.get_absolute_url }}" class="card-cat">{{ produto.categoria.nome }}</a>
+    <h1>{{ produto.nome }}</h1>
+    <div class="ficha">
+      <span>{{ produto.get_condicao_display }}</span>
+      {% if produto.tamanho %}<span>Tamanho: {{ produto.tamanho }}</span>{% endif %}
+      <span>{% if produto.estoque == 1 %}Última unidade!{% else %}{{ produto.estoque }} disponíveis{% endif %}</span>
+    </div>
+    <div class="preco">{% if produto.preco_antigo %}<s>R$ {{ produto.preco_antigo }}</s>{% endif %}R$ {{ produto.preco }}</div>
+
+    {% if produto.disponivel %}
+    <form class="comprar" method="post" action="{% url 'loja:carrinho_adicionar' produto.id %}">
+      {% csrf_token %}
+      <input type="number" name="quantidade" value="1" min="1" max="{{ produto.estoque }}" aria-label="Quantidade">
+      <button class="btn btn-sec" type="submit" name="next" value="{{ request.get_full_path }}">🛍️ Adicionar à sacola</button>
+      <button class="btn" type="submit" name="next" value="{% url 'loja:checkout' %}">Comprar</button>
+    </form>
+    {% else %}
+      <p class="status cancelado">Esgotado</p>
+    {% endif %}
+
+    {% if produto.descricao %}<div>{{ produto.descricao|linebreaks }}</div>{% endif %}
+    <p class="aviso-ong">♥ Comprando este achadinho, 30% do valor vai para a ONG. Entrega em {{ cidade_entrega }} ou retirada no local.</p>
+  </div>
+</article>
+
+{% if relacionados %}
+<section class="secao">
+  <div class="secao-topo"><h2>Você também pode gostar</h2></div>
+  <div class="grade">{% for p in relacionados %}{% include "loja/_card.html" %}{% endfor %}</div>
+</section>
+{% endif %}
+{% endblock %}

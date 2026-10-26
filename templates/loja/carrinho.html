@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% load static %}
+{% block titulo %}Minha sacola{% endblock %}
+{% block conteudo %}
+<section class="secao">
+  <h2 class="script" style="color:var(--rosa);font-size:2.4rem;margin:0">Minha sacola</h2>
+  {% if itens %}
+  <div class="duas-col">
+    <div class="caixa">
+      {% for i in itens %}
+      <div class="linha-item">
+        {% if i.produto.imagem %}<img src="{{ i.produto.imagem.url }}" alt="">{% else %}<span class="mini"></span>{% endif %}
+        <div>
+          <a href="{{ i.produto.get_absolute_url }}"><strong>{{ i.produto.nome }}</strong></a><br>
+          <span class="card-cat">R$ {{ i.produto.preco }} cada</span><br>
+          <form method="post" action="{% url 'loja:carrinho_atualizar' i.produto.id %}">
+            {% csrf_token %}
+            <input type="number" name="quantidade" value="{{ i.quantidade }}" min="0" max="{{ i.produto.estoque }}" aria-label="Quantidade">
+            <button class="btn btn-sec btn-peq" type="submit">Atualizar</button>
+          </form>
+          <form method="post" action="{% url 'loja:carrinho_remover' i.produto.id %}">
+            {% csrf_token %}<button class="btn btn-sec btn-peq" type="submit">Remover</button>
+          </form>
+        </div>
+        <strong>R$ {{ i.total }}</strong>
+      </div>
+      {% endfor %}
+    </div>
+    <aside class="caixa resumo">
+      <dl>
+        <dt>Subtotal</dt><dd>R$ {{ subtotal }}</dd>
+        <dt>Entrega em {{ cidade_entrega }}</dt><dd>R$ {{ taxa_entrega }}</dd>
+        <dt>Retirada no local</dt><dd>Grátis</dd>
+      </dl>
+      <a class="btn btn-bloco" href="{% url 'loja:checkout' %}">Finalizar compra</a>
+      <p class="card-cat" style="text-align:center">Continue garimpando: <a href="{% url 'loja:buscar' %}">ver mais achadinhos</a></p>
+    </aside>
+  </div>
+  {% else %}
+    <div class="caixa vazio" style="margin-top:20px">
+      <p>Sua sacola está vazia 🛍️</p>
+      <a class="btn" href="{% url 'loja:buscar' %}">Começar a garimpar</a>
+    </div>
+  {% endif %}
+</section>
+{% endblock %}

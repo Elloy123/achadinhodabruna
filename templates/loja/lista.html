@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block titulo %}{{ titulo }}{% endblock %}
+{% block conteudo %}
+<section class="secao">
+  <div class="secao-topo">
+    <div>
+      <h2>{{ titulo }}</h2>
+      <span class="card-cat">{{ pagina.paginator.count }} achadinho{{ pagina.paginator.count|pluralize }}</span>
+    </div>
+    <form class="filtros" method="get">
+      {% if termo %}<input type="hidden" name="q" value="{{ termo }}">{% endif %}
+      <select name="condicao" onchange="this.form.submit()" aria-label="Condição">
+        <option value="">Todas as condições</option>
+        {% for v, n in condicoes %}<option value="{{ v }}" {% if condicao == v %}selected{% endif %}>{{ n }}</option>{% endfor %}
+      </select>
+      <select name="ordem" onchange="this.form.submit()" aria-label="Ordenar">
+        <option value="">Relevância</option>
+        <option value="novos" {% if ordem == "novos" %}selected{% endif %}>Mais recentes</option>
+        <option value="menor" {% if ordem == "menor" %}selected{% endif %}>Menor preço</option>
+        <option value="maior" {% if ordem == "maior" %}selected{% endif %}>Maior preço</option>
+      </select>
+    </form>
+  </div>
+
+  {% if pagina.object_list %}
+    <div class="grade">{% for p in pagina.object_list %}{% include "loja/_card.html" %}{% endfor %}</div>
+    {% if pagina.has_other_pages %}
+    <nav class="paginacao">
+      {% if pagina.has_previous %}<a class="btn btn-sec btn-peq" href="?{% if termo %}q={{ termo|urlencode }}&{% endif %}ordem={{ ordem }}&condicao={{ condicao }}&page={{ pagina.previous_page_number }}">← Anterior</a>{% endif %}
+      <span>Página {{ pagina.number }} de {{ pagina.paginator.num_pages }}</span>
+      {% if pagina.has_next %}<a class="btn btn-sec btn-peq" href="?{% if termo %}q={{ termo|urlencode }}&{% endif %}ordem={{ ordem }}&condicao={{ condicao }}&page={{ pagina.next_page_number }}">Próxima →</a>{% endif %}
+    </nav>
+    {% endif %}
+  {% else %}
+    <div class="caixa vazio">
+      <p>Não encontramos nada{% if termo %} para “{{ termo }}”{% endif %} 😢</p>
+      <p>Mas anotamos o seu pedido! Toda semana chegam achadinhos novos.</p>
+      {% if whatsapp_loja %}<a class="btn btn-zap" href="https://wa.me/{{ whatsapp_loja }}?text={{ 'Oi! Vocês têm '|urlencode }}{{ termo|urlencode }}%3F" target="_blank" rel="noopener">Perguntar no WhatsApp</a>{% endif %}
+    </div>
+  {% endif %}
+</section>
+{% endblock %}

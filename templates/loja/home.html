@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block conteudo %}
+<section class="hero">
+  <h1>Achadinhos<small>da Bruna</small></h1>
+  <p>Bazar de novos, seminovos e usados com preços que cabem no seu bolso!</p>
+  <div class="selos">
+    <div class="selo"><b>🏷️</b>Variedade de produtos</div>
+    <div class="selo"><b>💲</b>Preços acessíveis</div>
+    <div class="selo"><b>🔄</b>Seminovos e usados</div>
+    <div class="selo"><b>♥</b>30% das vendas para a ONG</div>
+  </div>
+  <span class="slogan">Achadinhos que fazem a diferença!</span>
+</section>
+
+{% if destaques %}
+<section class="secao">
+  <div class="secao-topo"><h2>Destaques</h2></div>
+  <div class="grade">{% for p in destaques %}{% include "loja/_card.html" %}{% endfor %}</div>
+</section>
+{% endif %}
+
+<section class="secao">
+  <div class="secao-topo">
+    <h2>Chegou agora</h2>
+    <a href="{% url 'loja:buscar' %}">Ver todos →</a>
+  </div>
+  {% if novidades %}
+    <div class="grade">{% for p in novidades %}{% include "loja/_card.html" %}{% endfor %}</div>
+  {% else %}
+    <div class="caixa vazio">Em breve, muitos achadinhos por aqui! ♥</div>
+  {% endif %}
+</section>
+{% endblock %}

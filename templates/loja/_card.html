@@ -1,0 +1,25 @@
+{% load static %}<div class="card">
+  <a class="card-img" href="{{ p.get_absolute_url }}">
+    {% if p.imagem %}<img src="{{ p.imagem.url }}" alt="{{ p.nome }}" loading="lazy">{% else %}<img class="sem-foto" src="{% static 'img/logo.svg' %}" alt="">{% endif %}
+    <span class="etiqueta {{ p.condicao }}">{{ p.get_condicao_display }}</span>
+  </a>
+  <div class="card-corpo">
+    <span class="card-cat">{{ p.categoria.nome }}{% if p.tamanho %} · {{ p.tamanho }}{% endif %}</span>
+    <h3><a href="{{ p.get_absolute_url }}">{{ p.nome }}</a></h3>
+    <span class="preco">{% if p.preco_antigo %}<s>R$ {{ p.preco_antigo }}</s>{% endif %}R$ {{ p.preco }}</span>
+    {% if p.disponivel %}
+    <div class="card-botoes">
+      <form method="post" action="{% url 'loja:carrinho_adicionar' p.id %}">
+        {% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}">
+        <button class="btn btn-sec btn-peq" type="submit">🛍️ Adicionar à sacola</button>
+      </form>
+      <form method="post" action="{% url 'loja:carrinho_adicionar' p.id %}">
+        {% csrf_token %}<input type="hidden" name="next" value="{% url 'loja:checkout' %}">
+        <button class="btn btn-peq" type="submit">Comprar</button>
+      </form>
+    </div>
+    {% else %}
+      <span class="status cancelado">Esgotado</span>
+    {% endif %}
+  </div>
+</div>

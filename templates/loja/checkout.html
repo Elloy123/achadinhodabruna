@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block titulo %}Finalizar compra{% endblock %}
+{% block conteudo %}
+<section class="secao">
+  <h2 class="script" style="color:var(--rosa);font-size:2.4rem;margin:0">Finalizar compra</h2>
+  <form method="post" class="duas-col" id="form-checkout">
+    {% csrf_token %}
+    <div class="caixa">
+      {% for campo in form %}
+        {% if campo.name == "tipo_entrega" %}
+          <div class="campo">
+            <label>{{ campo.label }}</label>
+            <div class="opcoes-entrega">
+              {% for r in campo %}<label>{{ r.tag }} {{ r.choice_label }}</label>{% endfor %}
+            </div>
+            <p class="card-cat" id="info-retirada">📍 Retirada: {{ endereco_retirada }}</p>
+            <p class="card-cat" id="info-entrega">🛵 Entregamos somente dentro de {{ cidade_entrega }}-PA · taxa R$ {{ taxa_entrega }}</p>
+          </div>
+        {% else %}
+          <div class="campo {% if campo.name in 'endereco bairro referencia' %}so-entrega{% endif %}">
+            {{ campo.label_tag }}{{ campo }}
+            {% for e in campo.errors %}<span class="erro">{{ e }}</span>{% endfor %}
+          </div>
+        {% endif %}
+      {% endfor %}
+    </div>
+    <aside class="caixa resumo">
+      {% for i in itens %}
+        <div class="linha-item" style="grid-template-columns:1fr auto">
+          <span>{{ i.quantidade }}× {{ i.produto.nome }}</span><strong>R$ {{ i.total }}</strong>
+        </div>
+      {% endfor %}
+      <dl style="margin-top:12px">
+        <dt>Subtotal</dt><dd>R$ {{ subtotal }}</dd>
+        <dt>Entrega</dt><dd id="valor-entrega">—</dd>
+        <dt class="total">Total</dt><dd class="total" id="valor-total">R$ {{ subtotal }}</dd>
+      </dl>
+      <button class="btn btn-mp btn-bloco" type="submit">Pagar com Mercado Pago</button>
+      <p class="card-cat" style="text-align:center">Pix, cartão de crédito/débito ou boleto. Ambiente seguro.</p>
+    </aside>
+  </form>
+</section>
+
+<script>
+(() => {
+  const subtotal = {{ subtotal|stringformat:".2f" }};
+  const taxa = {{ taxa_entrega|stringformat:".2f" }};
+  const form = document.getElementById("form-checkout");
+  const brl = v => "R$ " + v.toFixed(2).replace(".", ",");
+  function atualizar() {
+    const tipo = (form.querySelector("input[name=tipo_entrega]:checked") || {}).value;
+    const entrega = tipo === "entrega";
+    form.querySelectorAll(".so-entrega").forEach(el => el.style.display = entrega ? "" : "none");
+    document.getElementById("info-entrega").style.display = entrega ? "" : "none";
+    document.getElementById("info-retirada").style.display = entrega ? "none" : "";
+    document.getElementById("valor-entrega").textContent = entrega ? brl(taxa) : "Grátis";
+    document.getElementById("valor-total").textContent = brl(subtotal + (entrega ? taxa : 0));
+  }
+  form.addEventListener("change", atualizar);
+  atualizar();
+})();
+</script>
+{% endblock %}

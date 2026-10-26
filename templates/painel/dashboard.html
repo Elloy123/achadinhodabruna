@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block titulo %}Painel{% endblock %}
+{% block head %}
+<style>
+  .painel-topo { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin:24px 0 8px; }
+  .painel-topo h1 { font-family:"Dancing Script",cursive; color:var(--rosa); font-size:2.6rem; margin:0; }
+  .periodos { display:flex; gap:6px; flex-wrap:wrap; }
+  .periodos a { padding:6px 14px; border-radius:999px; background:var(--branco); font-weight:700; font-size:.9rem; border:2px solid var(--borda); }
+  .periodos a.ativo { background:var(--rosa); color:#fff; border-color:var(--rosa); }
+  .kpis { display:grid; grid-template-columns:repeat(auto-fill,minmax(170px,1fr)); gap:12px; margin:16px 0; }
+  .kpi { background:var(--branco); border-radius:16px; padding:16px; box-shadow:var(--sombra); }
+  .kpi span { font-size:.8rem; color:var(--texto-suave); font-weight:700; text-transform:uppercase; letter-spacing:.04em; }
+  .kpi strong { display:block; font-size:1.6rem; color:var(--texto); margin-top:4px; font-variant-numeric:tabular-nums; }
+  .kpi.ong { background:var(--vinho); } .kpi.ong span { color:#f7d9e4; } .kpi.ong strong { color:var(--dourado); }
+  .grade-painel { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; margin-bottom:16px; }
+  .grade-painel .larga { grid-column:1/-1; }
+  .bloco { background:var(--branco); border-radius:16px; padding:18px; box-shadow:var(--sombra); min-width:0; }
+  .bloco h3 { margin:0 0 4px; font-size:1.05rem; }
+  .bloco p.sub { margin:0 0 12px; font-size:.85rem; color:var(--texto-suave); }
+  .grafico { position:relative; height:260px; }
+  table.t { width:100%; border-collapse:collapse; font-size:.92rem; }
+  table.t th { text-align:left; color:var(--texto-suave); font-size:.78rem; text-transform:uppercase; padding:6px 4px; border-bottom:2px solid var(--borda); }
+  table.t td { padding:7px 4px; border-bottom:1px solid var(--borda); }
+  table.t td.n { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+  .vazio-p { color:var(--texto-suave); font-size:.9rem; padding:12px 0; }
+  .tabela-scroll { overflow-x:auto; }
+  @media (max-width:820px) { .grade-painel { grid-template-columns:1fr; } }
+</style>
+{% endblock %}
+
+{% block conteudo %}
+<div class="painel-topo">
+  <h1>Painel da loja</h1>
+  <nav class="periodos">
+    {% for v, n in periodos %}<a href="?periodo={{ v }}" {% if periodo == v %}class="ativo"{% endif %}>{{ n }}</a>{% endfor %}
+    <a href="{% url 'admin:index' %}">⚙️ Admin</a>
+  </nav>
+</div>
+
+<section class="kpis">
+  <div class="kpi"><span>Faturamento</span><strong>R$ {{ kpis.faturamento|floatformat:2|intcomma }}</strong></div>
+  <div class="kpi"><span>Pedidos pagos</span><strong>{{ kpis.pedidos }}</strong></div>
+  <div class="kpi"><span>Ticket médio</span><strong>R$ {{ kpis.ticket|floatformat:2 }}</strong></div>
+  <div class="kpi ong"><span>♥ Para a ONG (30%)</span><strong>R$ {{ kpis.ong|floatformat:2|intcomma }}</strong></div>
+  <div class="kpi"><span>Buscas</span><strong>{{ kpis.buscas }}</strong></div>
+  <div class="kpi"><span>Buscas sem resultado</span><strong>{{ kpis.sem_resultado_pct }}%</strong></div>
+  <div class="kpi"><span>A preparar</span><strong>{{ kpis.a_preparar }}</strong></div>
+  <div class="kpi"><span>Aguardando pgto.</span><strong>{{ kpis.aguardando }}</strong></div>
+</section>
+
+<section class="grade-painel">
+  <div class="bloco larga">
+    <h3>Vendas por dia (R$)</h3>
+    <p class="sub">Pedidos pagos no período · Entrega: {{ graficos.entrega.valores.0 }} · Retirada: {{ graficos.entrega.valores.1 }}</p>
+    <div class="grafico"><canvas id="g-vendas" aria-label="Gráfico de vendas por dia"></canvas></div>
+  </div>
+
+  <div class="bloco">
+    <h3>🔎 Mais buscados</h3>
+    <p class="sub">O que o povo de Rurópolis mais procura</p>
+    {% if mais_buscados %}<div class="grafico"><canvas id="g-buscados"></canvas></div>{% else %}<p class="vazio-p">Nenhuma busca no período.</p>{% endif %}
+  </div>
+
+  <div class="bloco">
+    <h3>🛍️ Mais vendidos</h3>
+    <p class="sub">Unidades vendidas em pedidos pagos</p>
+    {% if mais_vendidos %}<div class="grafico"><canvas id="g-vendidos"></canvas></div>{% else %}<p class="vazio-p">Nenhuma venda no período.</p>{% endif %}
+  </div>
+
+  <div class="bloco">
+    <h3>⚠️ Buscados e não encontrados</h3>
+    <p class="sub">Oportunidade: gente procurando o que ainda não tem na loja</p>
+    {% if buscas_sem_resultado %}
+    <table class="t"><thead><tr><th>Termo</th><th class="n">Buscas</th></tr></thead><tbody>
+      {% for b in buscas_sem_resultado %}<tr><td>{{ b.termo }}</td><td class="n">{{ b.qtd }}</td></tr>{% endfor %}
+    </tbody></table>
+    {% else %}<p class="vazio-p">Tudo que buscaram foi encontrado 🎉</p>{% endif %}
+  </div>
+
+  <div class="bloco">
+    <h3>🔻 Menos buscados</h3>
+    <p class="sub">Termos com pouca procura</p>
+    {% if menos_buscados %}
+    <table class="t"><thead><tr><th>Termo</th><th class="n">Buscas</th></tr></thead><tbody>
+      {% for b in menos_buscados %}<tr><td>{{ b.termo }}</td><td class="n">{{ b.qtd }}</td></tr>{% endfor %}
+    </tbody></table>
+    {% else %}<p class="vazio-p">Sem dados.</p>{% endif %}
+  </div>
+
+  <div class="bloco">
+    <h3>🐢 Menos vendidos (em estoque)</h3>
+    <p class="sub">Candidatos a promoção ou destaque</p>
+    {% if menos_vendidos %}
+    <table class="t"><thead><tr><th>Produto</th><th class="n">Vendidos</th><th class="n">Visitas</th><th class="n">Estoque</th></tr></thead><tbody>
+      {% for p in menos_vendidos %}<tr><td><a href="{% url 'admin:loja_produto_change' p.pk %}">{{ p.nome }}</a></td><td class="n">{{ p.vendidos }}</td><td class="n">{{ p.visualizacoes }}</td><td class="n">{{ p.estoque }}</td></tr>{% endfor %}
+    </tbody></table>
+    {% else %}<p class="vazio-p">Sem produtos ativos.</p>{% endif %}
+  </div>
+
+  <div class="bloco">
+    <h3>👀 Mais visitados × conversão</h3>
+    <p class="sub">Muita visita e pouca venda = rever preço ou foto (visitas acumuladas)</p>
+    {% if mais_vistos %}
+    <table class="t"><thead><tr><th>Produto</th><th class="n">Visitas</th><th class="n">Vendidos</th><th class="n">Conv.</th></tr></thead><tbody>
+      {% for p in mais_vistos %}<tr><td>{{ p.nome }}</td><td class="n">{{ p.visualizacoes }}</td><td class="n">{{ p.vendidos }}</td><td class="n">{{ p.conversao }}%</td></tr>{% endfor %}
+    </tbody></table>
+    {% else %}<p class="vazio-p">Sem dados.</p>{% endif %}
+  </div>
+
+  <div class="bloco">
+    <h3>🏷️ Receita por categoria</h3>
+    <p class="sub">R$ em pedidos pagos</p>
+    {% if graficos.categorias.labels %}<div class="grafico"><canvas id="g-categorias"></canvas></div>{% else %}<p class="vazio-p">Nenhuma venda no período.</p>{% endif %}
+  </div>
+
+  <div class="bloco">
+    <h3>📈 Buscas por dia</h3>
+    <p class="sub">Movimento no site</p>
+    {% if graficos.buscas.labels %}<div class="grafico"><canvas id="g-buscas"></canvas></div>{% else %}<p class="vazio-p">Nenhuma busca no período.</p>{% endif %}
+  </div>
+
+  <div class="bloco">
+    <h3>📦 Estoque baixo</h3>
+    <p class="sub">Até 2 unidades</p>
+    {% if estoque_baixo %}
+    <table class="t"><thead><tr><th>Produto</th><th class="n">Estoque</th></tr></thead><tbody>
+      {% for p in estoque_baixo %}<tr><td><a href="{% url 'admin:loja_produto_change' p.pk %}">{{ p.nome }}</a></td><td class="n">{{ p.estoque }}</td></tr>{% endfor %}
+    </tbody></table>
+    {% else %}<p class="vazio-p">Estoque tranquilo.</p>{% endif %}
+  </div>
+
+  <div class="bloco larga">
+    <h3>🧾 Últimos pedidos</h3>
+    {% if ultimos_pedidos %}
+    <div class="tabela-scroll"><table class="t"><thead><tr><th>#</th><th>Cliente</th><th>WhatsApp</th><th>Tipo</th><th>Status</th><th class="n">Total</th><th class="n">Data</th></tr></thead><tbody>
+      {% for p in ultimos_pedidos %}<tr>
+        <td><a href="{% url 'admin:loja_pedido_change' p.pk %}">{{ p.pk }}</a></td><td>{{ p.nome }}</td><td>{{ p.telefone }}</td>
+        <td>{{ p.get_tipo_entrega_display }}</td><td><span class="status {{ p.status }}">{{ p.get_status_display }}</span></td>
+        <td class="n">R$ {{ p.total }}</td><td class="n">{{ p.criado_em|date:"d/m H:i" }}</td></tr>{% endfor %}
+    </tbody></table></div>
+    {% else %}<p class="vazio-p">Nenhum pedido ainda.</p>{% endif %}
+  </div>
+</section>
+
+{{ graficos|json_script:"dados-graficos" }}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+(() => {
+  const d = JSON.parse(document.getElementById("dados-graficos").textContent);
+  const rosa = "#e8457c", grade = "#f3e3ea", texto = "#7d6470";
+  const brl = v => "R$ " + Number(v).toLocaleString("pt-BR", {minimumFractionDigits: 2, maximumFractionDigits: 2});
+  Chart.defaults.font.family = "Quicksand, sans-serif";
+  Chart.defaults.color = texto;
+  Chart.defaults.plugins.legend.display = false;   // séries únicas: o título nomeia
+  Chart.defaults.maintainAspectRatio = false;
+  const eixos = (horizontal, fmt) => {
+    const valor = {beginAtZero: true, grid: {color: grade}, border: {display: false}, ticks: fmt ? {callback: fmt} : {precision: 0}};
+    const cat = {grid: {display: false}, border: {color: grade}};
+    return horizontal ? {x: valor, y: cat} : {x: cat, y: valor};
+  };
+  const tooltipBRL = {callbacks: {label: c => brl(c.parsed.y ?? c.parsed.x)}};
+
+  function barras(id, serie, horizontal, emReais) {
+    const el = document.getElementById(id);
+    if (!el || !serie.labels.length) return;
+    new Chart(el, {
+      type: "bar",
+      data: {labels: serie.labels, datasets: [{data: serie.valores, backgroundColor: rosa, hoverBackgroundColor: "#c2185b",
+             borderRadius: 4, borderSkipped: "start", maxBarThickness: 22}]},
+      options: {indexAxis: horizontal ? "y" : "x", scales: eixos(horizontal, emReais ? brl : null),
+                plugins: {tooltip: emReais ? tooltipBRL : {}}},
+    });
+  }
+  function linha(id, serie, emReais) {
+    const el = document.getElementById(id);
+    if (!el || !serie.labels.length) return;
+    new Chart(el, {
+      type: "line",
+      data: {labels: serie.labels, datasets: [{data: serie.valores, borderColor: rosa, borderWidth: 2, tension: .3,
+             fill: true, backgroundColor: "rgba(232,69,124,.10)", pointRadius: serie.labels.length > 31 ? 0 : 3,
+             pointHoverRadius: 5, pointBackgroundColor: rosa}]},
+      options: {interaction: {mode: "index", intersect: false}, scales: eixos(false, emReais ? brl : null),
+                plugins: {tooltip: emReais ? tooltipBRL : {}}},
+    });
+  }
+
+  linha("g-vendas", d.vendas, true);
+  linha("g-buscas", d.buscas, false);
+  barras("g-buscados", d.mais_buscados, true, false);
+  barras("g-vendidos", d.mais_vendidos, true, false);
+  barras("g-categorias", d.categorias, true, true);
+})();
+</script>
+{% endblock %}

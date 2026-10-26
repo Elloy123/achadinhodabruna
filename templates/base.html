@@ -1,0 +1,71 @@
+{% load static %}<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block titulo %}Achadinhos da Bruna{% endblock %} · Bazar em Rurópolis</title>
+  <meta name="description" content=" Novos, seminovos e usados em Rurópolis-PA. Roupas, calçados, bijuterias e variedades com preços que cabem no seu bolso. 30% das vendas para a ONG.">
+  <link rel="icon" href="{% static 'img/logo.svg' %}" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/loja.css' %}">
+  {% block head %}{% endblock %}
+</head>
+<body>
+  <div class="faixa-ong">♥ 30% de todas as vendas vão para a ONG Resgata Rurópolis· Entrega em {{ cidade_entrega }} ou retirada no local ♥</div>
+
+  <header class="topo">
+    <div class="container topo-linha">
+      <a href="{% url 'loja:home' %}" class="marca" aria-label="Página inicial">
+        <img src="{% static 'img/logo.svg' %}" alt="">
+        <span class="marca-nome"><strong>Achadinhos</strong><span>da Bruna</span></span>
+      </a>
+      <form class="busca" action="{% url 'loja:buscar' %}" method="get" role="search">
+        <input type="search" name="q" value="{{ termo|default:'' }}" placeholder="O que você procura? Ex.: vestido, sandália, colar…" aria-label="Buscar">
+        <button type="submit">Buscar</button>
+      </form>
+      <div class="acoes-topo">
+        {% if user.is_staff %}<a class="btn-sacola" href="{% url 'painel:dashboard' %}">📊 Painel</a>{% endif %}
+        <a class="btn-sacola" href="{% url 'loja:carrinho' %}">🛍️ Sacola <span class="contador">{{ qtd_carrinho }}</span></a>
+      </div>
+    </div>
+    <nav class="menu-cat" aria-label="Categorias">
+      <ul class="container">
+        <li><a href="{% url 'loja:buscar' %}">Tudo</a></li>
+        {% for c in categorias_menu %}
+          <li><a href="{{ c.get_absolute_url }}" {% if categoria_atual == c %}class="ativo"{% endif %}>{{ c.nome }}</a></li>
+        {% endfor %}
+      </ul>
+    </nav>
+  </header>
+
+  <main class="container">
+    {% if messages %}
+      <div class="mensagens">
+        {% for m in messages %}<div class="msg {{ m.tags }}">{{ m }}</div>{% endfor %}
+      </div>
+    {% endif %}
+    {% block conteudo %}{% endblock %}
+  </main>
+
+  <footer class="rodape">
+    <div class="container rodape-grade">
+      <div>
+        <p class="script">Achadinhos da Bruna</p>
+        <p> Novos, seminovos e usados com preços que cabem no seu bolso. Achadinhos que fazem a diferença!</p>
+      </div>
+      <div>
+        <h4>Entrega</h4>
+        <p>Entregamos em toda {{ cidade_entrega }}-PA ou você retira no local.</p>
+      </div>
+      <div>
+        <h4>Fale com a gente</h4>
+        {% if whatsapp_loja %}<p><a href="https://wa.me/{{ whatsapp_loja }}" target="_blank" rel="noopener">WhatsApp</a></p>{% endif %}
+        <p>Pagamento seguro via Mercado Pago: Pix, cartão e boleto.</p>
+      </div>
+    </div>
+    <small>♥ EST. 2026 ♥</small>
+  </footer>
+</body>
+</html>

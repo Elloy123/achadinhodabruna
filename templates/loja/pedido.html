@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block titulo %}Pedido #{{ pedido.pk }}{% endblock %}
+{% block conteudo %}
+<section class="secao">
+  <h2 class="script" style="color:var(--rosa);font-size:2.4rem;margin:0">Pedido #{{ pedido.pk }}</h2>
+  <p>Status: <span class="status {{ pedido.status }}">{{ pedido.get_status_display }}</span></p>
+
+  {% if pedido.status == "pago" %}
+    <div class="msg success">Pagamento aprovado! Obrigada, {{ pedido.nome }} ♥ Em breve entraremos em contato pelo WhatsApp.</div>
+  {% elif pedido.mp_status == "pending" or pedido.mp_status == "in_process" %}
+    <div class="msg warning">Pagamento em análise. Assim que for confirmado, o status muda aqui sozinho.</div>
+  {% endif %}
+
+  <div class="duas-col">
+    <div class="caixa">
+      {% for i in pedido.itens.all %}
+        <div class="linha-item" style="grid-template-columns:1fr auto">
+          <span>{{ i.quantidade }}× {{ i.nome_produto }}</span><strong>R$ {{ i.total }}</strong>
+        </div>
+      {% endfor %}
+      <h4>{{ pedido.get_tipo_entrega_display }}</h4>
+      {% if pedido.tipo_entrega == "entrega" %}
+        <p>{{ pedido.endereco }} — {{ pedido.bairro }}, {{ cidade_entrega }}-PA{% if pedido.referencia %}<br>Ref.: {{ pedido.referencia }}{% endif %}</p>
+      {% else %}
+        <p>📍 {{ endereco_retirada }}</p>
+      {% endif %}
+    </div>
+    <aside class="caixa resumo">
+      <dl>
+        <dt>Subtotal</dt><dd>R$ {{ pedido.subtotal }}</dd>
+        <dt>Entrega</dt><dd>{% if pedido.taxa_entrega %}R$ {{ pedido.taxa_entrega }}{% else %}Grátis{% endif %}</dd>
+        <dt class="total">Total</dt><dd class="total">R$ {{ pedido.total }}</dd>
+        <dt>♥ Vai para a ONG</dt><dd>R$ {{ pedido.valor_ong }}</dd>
+      </dl>
+      {% if pedido.status == "aguardando" %}
+        <a class="btn btn-mp btn-bloco" href="{% url 'loja:pagar' pedido.codigo %}">Pagar com Mercado Pago</a>
+      {% endif %}
+      {% if whatsapp_loja %}
+        <a class="btn btn-zap btn-bloco" style="margin-top:8px" target="_blank" rel="noopener"
+           href="https://wa.me/{{ whatsapp_loja }}?text={{ 'Oi! Sobre o meu pedido #'|urlencode }}{{ pedido.pk }}">Falar no WhatsApp</a>
+      {% endif %}
+      <p class="card-cat" style="text-align:center">Guarde este link para acompanhar seu pedido.</p>
+    </aside>
+  </div>
+</section>
+{% endblock %}
